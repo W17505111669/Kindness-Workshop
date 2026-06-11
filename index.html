@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>善行工坊 · 公益宇宙 | 腾讯云黑客松公益赛道</title>
+    <meta name="description" content="一款覆盖适老化关怀、海洋保护、非遗传承、反诈教育、心理健康、粮食安全的HTML5公益聚合游戏平台。">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c1815'/%3E%3Ccircle cx='32' cy='32' r='20' fill='%23e5a93b'/%3E%3Cpath d='M20 34c7 9 17 9 24 0' fill='none' stroke='%23f5f0eb' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='25' r='4' fill='%23f5f0eb'/%3E%3Ccircle cx='40' cy='25' r='4' fill='%23f5f0eb'/%3E%3C/svg%3E">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;500;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="style.css?v=hackathon_v17_newgames">
+</head>
+<body>
+    <!-- Fullscreen Sanity Flash Overlay for Cognitive Restoration -->
+    <div id="sanity-flash-overlay"></div>
+
+    <!-- Canvas for Dust Particles Background (纯装饰) -->
+    <canvas id="particle-canvas" role="presentation" aria-hidden="true"></canvas>
+
+    <!-- Global Sound Toggle -->
+    <div id="audio-control" class="glass-panel" title="切换音乐/音效">
+        <button id="bgm-toggle-btn" class="audio-btn" type="button" aria-label="播放时光背景音乐" aria-pressed="false">
+            <span class="audio-icon playing">🔊</span>
+            <span class="audio-text">时光Lo-Fi音乐</span>
+        </button>
+    </div>
+
+    <!-- Main Game Container -->
+    <main id="app-container" tabindex="-1">
+
+        <!-- SCREEN 1: START/TITLE SCREEN -->
+        <section id="screen-start" class="game-screen active">
+            <div class="glow-orb main-orb"></div>
+            <div class="content-wrapper title-content">
+                <div class="badge">腾讯云黑客松 · 公益聚合平台</div>
+                <hgroup>
+                    <h1 class="game-title">善行工坊</h1>
+                    <h2 class="game-subtitle">Kindness Workshop · 公益宇宙</h2>
+                </hgroup>
+                
+                <p class="intro-text">
+                    一个善意的起点，六个公益世界。<br>
+                    从修复奶奶的旧物到重建海底森林，从拼接甲骨残片到拆穿诈骗迷局——<br>
+                    用你的双手，让每一次互动都成为改变世界的一小步。
+                </p>
+
+                <div class="start-actions">
+                    <button type="button" id="btn-start-game" class="btn-primary ripple">
+                        <span class="btn-icon">🌍</span> 进入公益宇宙
+                    </button>
+                    <button type="button" id="btn-open-guide" class="btn-secondary">
+                        <span class="btn-icon">💡</span> 了解公益赛道
+                    </button>
+                </div>
+
+                <div class="footer-note">
+                    <p>🏠 时光的回响 · 🌊 深蓝修复者 · 🀄 甲骨重光 · 🕸️ 真相拼图 · 🧩 心桥计划 · 🌾 禾下乘凉</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: MAIN HUB (THE ROOM) — REDESIGNED -->
+        <section id="screen-hub" class="game-screen">
+            <div class="content-wrapper hub-content-v2">
+                <header class="hub-header">
+                    <div class="header-left">
+                        <button type="button" id="btn-back-to-start" class="btn-text">&larr; 返回主页</button>
+                        <h2>奶奶的善行工坊</h2>
+                    </div>
+                    <div class="memory-progress-container glass-panel">
+                        <span class="progress-label" style="display: flex; align-items: center; gap: 6px; margin-right: 15px; background: rgba(229,169,59,0.1); border: 1px solid rgba(229,169,59,0.25); padding: 4px 12px; border-radius: 20px; font-weight: bold;">&#x1FA99; <span id="global-silver-balance">0</span></span>
+                        <span class="progress-label">记忆恢复度</span>
+                        <div class="progress-bar-bg">
+                            <div id="memory-progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <span id="progress-text">0%</span>
+                    </div>
+                </header>
+
+                <!-- 全局统计与每日挑战 -->
+                <div class="daily-challenge" id="daily-challenge-info">📅 今日挑战：加载中...</div>
+                <div class="global-stats-bar">
+                    <span>🎮 游戏次数: <strong id="stat-games-played">0</strong></span>
+                    <span>✅ 通关数: <strong id="stat-games-completed">0</strong></span>
+                    <span>🏆 成就: <strong id="stat-achievements">0</strong>/8</span>
+                    <span style="color:var(--text-muted);font-size:0.7rem;">⌨ 快捷键：1-5切换面板 H回阁楼 T换主题</span>
+                </div>
+
+                <div class="hub-layout">
+                    <!-- === Sidebar Navigation Tabs === -->
+                    <nav class="hub-nav" role="tablist" aria-label="游戏模式分类">
+                        <button id="hub-tab-capsules" class="hub-tab active" data-tab="capsules" type="button" role="tab" aria-selected="true" aria-controls="hub-panel-capsules" tabindex="0">
+                            <span class="tab-icon">&#x1F3E0;</span>
+                            <span class="tab-label">记忆阁楼</span>
+                        </button>
+                        <button id="hub-tab-brain" class="hub-tab" data-tab="brain" type="button" role="tab" aria-selected="false" aria-controls="hub-panel-brain" tabindex="-1">
+                            <span class="tab-icon">&#x1F9E0;</span>
+                            <span class="tab-label">认知训练</span>
+                        </button>
+                        <button id="hub-tab-cross" class="hub-tab" data-tab="cross" type="button" role="tab" aria-selected="false" aria-controls="hub-panel-cross" tabindex="-1">
+                            <span class="tab-icon">&#x1F30D;</span>
+                            <span class="tab-label">跨公益赛道</span>
+                        </button>
+                        <button id="hub-tab-antifraud" class="hub-tab" data-tab="antifraud" type="button" role="tab" aria-selected="false" aria-controls="hub-panel-antifraud" tabindex="-1">
+                            <span class="tab-icon">&#x2B50;</span>
+                            <span class="tab-label">星海寻光</span>
+                        </button>
+                        <button id="hub-tab-universe" class="hub-tab" data-tab="universe" type="button" role="tab" aria-selected="false" aria-controls="hub-panel-universe" tabindex="-1">
+                            <span class="tab-icon">&#x1F30A;</span>
+                            <span class="tab-label">公益宇宙</span>
+                        </button>
+                    </nav>
+
+                    <!-- === Panel Content Area === -->
+                    <div class="hub-panels">
+
+                        <!-- Panel 0: 记忆阁楼 (Capsules) -->
+                        <div id="hub-panel-capsules" class="hub-panel active" data-panel="capsules" role="tabpanel" aria-labelledby="hub-tab-capsules" aria-hidden="false">
+                            <p class="hub-hint">点击尘封的暗影，开启记忆的重构</p>
+                            <ul class="capsules-grid" aria-label="记忆物件列表" role="list">
+                                <li class="capsule-card glass-panel locked" id="capsule-radio" data-item="radio" role="button" tabindex="0" aria-label="物件一：老式收音机">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-radio-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件一</span><h3>老式收音机</h3><p class="capsule-desc">"吱呀吱呀的声音里，藏着那年秋天桂花的香气。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel locked" id="capsule-camera" data-item="camera" role="button" tabindex="0" aria-label="物件二：复古照相机">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-camera-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件二</span><h3>复古照相机</h3><p class="capsule-desc">"按下快门的那一瞬，青春的笑脸被定格为永恒。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel locked" id="capsule-sewing" data-item="sewing" role="button" tabindex="0" aria-label="物件三：足踏缝纫机">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-sewing-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件三</span><h3>足踏缝纫机</h3><p class="capsule-desc">"密密麻麻的针脚里，织进了一辈子的温柔与叮咛。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel locked" id="capsule-lantern" data-item="lantern" role="button" tabindex="0" aria-label="物件四：煤油马灯">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-lantern-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件四</span><h3>煤油马灯</h3><p class="capsule-desc">"微弱温热的火苗里，照亮了风雨泥泞中的期盼与坚守。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel locked" id="capsule-watch" data-item="watch" role="button" tabindex="0" aria-label="物件五：时光怀表">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-watch-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件五</span><h3>时光怀表</h3><p class="capsule-desc">"表盘指针的走动中，镌刻着岁月的步伐与无声的陪伴。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel" id="capsule-telephone" data-item="telephone" role="button" tabindex="0" aria-label="物件六：老式拨盘电话">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-telephone-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件六</span><h3>老式拨盘电话</h3><p class="capsule-desc">"失语症的电路隐喻——拨通那根断开的记忆线路。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel" id="capsule-musicbox" data-item="musicbox" role="button" tabindex="0" aria-label="物件七：木质八音盒">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-musicbox-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件七</span><h3>木质八音盒</h3><p class="capsule-desc">"碎片化的记忆旋律——补全失落的音符，让歌声再次完整。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel" id="capsule-abacus" data-item="abacus" role="button" tabindex="0" aria-label="物件八：古典算盘">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-abacus-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件八</span><h3>古典算盘</h3><p class="capsule-desc">"计算障碍的隐喻——拨动散乱的算珠，重建清晰的逻辑秩序。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                                <li class="capsule-card glass-panel" id="capsule-television" data-item="television" role="button" tabindex="0" aria-label="物件九：黑白电视机">
+                                    <div class="capsule-visual"><div class="silhouette-svg" id="silhouette-television-container"></div><div class="glow-ring"></div></div>
+                                    <div class="capsule-info"><span class="capsule-badge">物件九</span><h3>黑白电视机</h3><p class="capsule-desc">"视觉失认的隐喻——驱散白噪声，找回清晰的往昔影像。"</p><span class="btn-capsule-action" aria-hidden="true">开启重构</span></div>
+                                </li>
+                            </ul>
+                            <div class="hub-actions" style="display: flex; gap: 18px; justify-content: center; width: 100%; flex-wrap: wrap;">
+                                <button type="button" id="btn-open-shop" class="btn-primary ripple" style="background: linear-gradient(135deg, var(--accent-gold), var(--accent-rose)); border: none; box-shadow: 0 4px 15px rgba(229, 169, 59, 0.25);">
+                                    <span class="btn-icon">&#x1F3EA;</span> 进入回忆工坊商店
+                                </button>
+                                <button type="button" id="btn-open-album" class="btn-primary ripple">
+                                    <span class="btn-icon">&#x1F4D6;</span> 翻开时光记忆相册
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel 1: 认知训练 -->
+                        <div id="hub-panel-brain" class="hub-panel" data-panel="brain" role="tabpanel" aria-labelledby="hub-tab-brain" aria-hidden="true">
+                            <p class="hub-hint">每日认知训练，激活大脑神经通路</p>
+                            <div class="game-grid">
+                                <button type="button" id="btn-open-match" class="game-card" style="--card-glow: rgba(124,58,237,0.3);">
+                                    <span class="game-card-icon">&#x1F9E0;</span>
+                                    <span class="game-card-title">记忆翻牌</span>
+                                    <span class="game-card-desc">锻炼短时记忆与视觉匹配</span>
+                                </button>
+                                <button type="button" id="btn-open-timeline" class="game-card" style="--card-glow: rgba(5,150,105,0.3);">
+                                    <span class="game-card-icon">&#x1F4DC;</span>
+                                    <span class="game-card-title">时光排序</span>
+                                    <span class="game-card-desc">时序记忆与逻辑推理</span>
+                                </button>
+                                <button type="button" id="btn-open-hidden" class="game-card" style="--card-glow: rgba(217,119,6,0.3);">
+                                    <span class="game-card-icon">&#x1F50D;</span>
+                                    <span class="game-card-title">寻回失物</span>
+                                    <span class="game-card-desc">视觉搜索与细节辨识</span>
+                                </button>
+                                <button type="button" id="btn-open-maze" class="game-card" style="--card-glow: rgba(59,130,246,0.3);">
+                                    <span class="game-card-icon">🔢</span>
+                                    <span class="game-card-title">数字迷宫</span>
+                                    <span class="game-card-desc">数字序列与逻辑填空</span>
+                                </button>
+                                <button type="button" id="btn-open-color" class="game-card" style="--card-glow: rgba(236,72,153,0.3);">
+                                    <span class="game-card-icon">🎨</span>
+                                    <span class="game-card-title">色彩归类</span>
+                                    <span class="game-card-desc">色彩感知与分类执行</span>
+                                </button>
+                                <button type="button" id="btn-open-face" class="game-card" style="--card-glow: rgba(245,158,11,0.3);">
+                                    <span class="game-card-icon">👤</span>
+                                    <span class="game-card-title">面孔识别</span>
+                                    <span class="game-card-desc">熟悉面孔记忆唤醒</span>
+                                </button>
+                                <button type="button" id="btn-open-word" class="game-card" style="--card-glow: rgba(16,185,129,0.3);">
+                                    <span class="game-card-icon">💬</span>
+                                    <span class="game-card-title">词语联想</span>
+                                    <span class="game-card-desc">语义网络与词汇提取</span>
+                                </button>
+                                <button type="button" id="btn-open-rhythm" class="game-card" style="--card-glow: rgba(139,92,246,0.3);">
+                                    <span class="game-card-icon">🎵</span>
+                                    <span class="game-card-title">节奏复刻</span>
+                                    <span class="game-card-desc">听觉工作记忆训练</span>
+                                </button>
+                                <button type="button" id="btn-open-spatial" class="game-card" style="--card-glow: rgba(14,165,233,0.3);">
+                                    <span class="game-card-icon">🧭</span>
+                                    <span class="game-card-title">空间定向</span>
+                                    <span class="game-card-desc">空间认知与路径规划</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel 2: 跨公益赛道 -->
+                        <div id="hub-panel-cross" class="hub-panel" data-panel="cross" role="tabpanel" aria-labelledby="hub-tab-cross" aria-hidden="true">
+                            <p class="hub-hint">跨赛道公益体验，认知障碍多元关怀</p>
+                            <div class="game-grid">
+                                <button type="button" id="btn-open-eco" class="game-card" style="--card-glow: rgba(22,163,74,0.3);">
+                                    <span class="game-card-icon">&#x267B;</span>
+                                    <span class="game-card-title">环保分类</span>
+                                    <span class="game-card-desc">垃圾分类与执行力训练</span>
+                                </button>
+                                <button type="button" id="btn-open-fraud" class="game-card" style="--card-glow: rgba(220,38,38,0.3);">
+                                    <span class="game-card-icon">&#x1F6AB;</span>
+                                    <span class="game-card-title">防骗卫士</span>
+                                    <span class="game-card-desc">诈骗识别与判断力训练</span>
+                                </button>
+                                <button type="button" id="btn-open-a11y" class="game-card" style="--card-glow: rgba(37,99,235,0.3);">
+                                    <span class="game-card-icon">&#x1F308;</span>
+                                    <span class="game-card-title">无障碍体验</span>
+                                    <span class="game-card-desc">视障/听障共情体验</span>
+                                </button>
+                                <button type="button" id="btn-open-water" class="game-card" style="--card-glow: rgba(6,182,212,0.3);">
+                                    <span class="game-card-icon">💧</span>
+                                    <span class="game-card-title">节水达人</span>
+                                    <span class="game-card-desc">水资源保护与节约计算</span>
+                                </button>
+                                <button type="button" id="btn-open-carbon" class="game-card" style="--card-glow: rgba(34,197,94,0.3);">
+                                    <span class="game-card-icon">🌍</span>
+                                    <span class="game-card-title">碳足迹追踪</span>
+                                    <span class="game-card-desc">日常碳排放计算</span>
+                                </button>
+                                <button type="button" id="btn-open-repair" class="game-card" style="--card-glow: rgba(168,85,247,0.3);">
+                                    <span class="game-card-icon">🔧</span>
+                                    <span class="game-card-title">旧物新生</span>
+                                    <span class="game-card-desc">旧物改造与循环利用</span>
+                                </button>
+                                <button type="button" id="btn-open-aid" class="game-card" style="--card-glow: rgba(239,68,68,0.3);">
+                                    <span class="game-card-icon">🏥</span>
+                                    <span class="game-card-title">急救先锋</span>
+                                    <span class="game-card-desc">急救步骤模拟训练</span>
+                                </button>
+                                <button type="button" id="btn-open-food" class="game-card" style="--card-glow: rgba(251,146,60,0.3);">
+                                    <span class="game-card-icon">🍎</span>
+                                    <span class="game-card-title">食品安全</span>
+                                    <span class="game-card-desc">识别过期与变质食品</span>
+                                </button>
+                                <button type="button" id="btn-open-animal" class="game-card" style="--card-glow: rgba(20,184,166,0.3);">
+                                    <span class="game-card-icon">🐾</span>
+                                    <span class="game-card-title">动物救助</span>
+                                    <span class="game-card-desc">野生动物救助知识</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel 3: 星海寻光 · 赛博反诈 -->
+                        <div id="hub-panel-antifraud" class="hub-panel" data-panel="antifraud" role="tabpanel" aria-labelledby="hub-tab-antifraud" aria-hidden="true">
+                            <p class="hub-hint">&#x2B50; 星海寻光 &middot; 赛博反诈 — 练就数字时代的火眼金睛</p>
+                            <div class="game-grid">
+                                <button type="button" id="btn-open-trace" class="game-card" style="--card-glow: rgba(0,255,136,0.3);">
+                                    <span class="game-card-icon">&#x1F517;</span>
+                                    <span class="game-card-title">信号溯源</span>
+                                    <span class="game-card-desc">追踪诈骗信号源头</span>
+                                </button>
+                                <button type="button" id="btn-open-decode" class="game-card" style="--card-glow: rgba(255,0,255,0.3);">
+                                    <span class="game-card-icon">&#x1F9E9;</span>
+                                    <span class="game-card-title">密码重组</span>
+                                    <span class="game-card-desc">破译反诈安全密码</span>
+                                </button>
+                                <button type="button" id="btn-open-phish" class="game-card" style="--card-glow: rgba(255,59,48,0.3);">
+                                    <span class="game-card-icon">🎣</span>
+                                    <span class="game-card-title">钓鱼识别</span>
+                                    <span class="game-card-desc">识别钓鱼网站特征</span>
+                                </button>
+                                <button type="button" id="btn-open-script" class="game-card" style="--card-glow: rgba(0,122,255,0.3);">
+                                    <span class="game-card-icon">📋</span>
+                                    <span class="game-card-title">话术拆解</span>
+                                    <span class="game-card-desc">拆解诈骗话术逻辑</span>
+                                </button>
+                                <button type="button" id="btn-open-identity" class="game-card" style="--card-glow: rgba(175,82,222,0.3);">
+                                    <span class="game-card-icon">🆔</span>
+                                    <span class="game-card-title">身份验证</span>
+                                    <span class="game-card-desc">验证对方真实身份</span>
+                                </button>
+                                <button type="button" id="btn-open-transfer" class="game-card" style="--card-glow: rgba(255,149,0,0.3);">
+                                    <span class="game-card-icon">💸</span>
+                                    <span class="game-card-title">转账陷阱</span>
+                                    <span class="game-card-desc">识别转账诈骗套路</span>
+                                </button>
+                                <button type="button" id="btn-open-leak" class="game-card" style="--card-glow: rgba(48,209,88,0.3);">
+                                    <span class="game-card-icon">🔓</span>
+                                    <span class="game-card-title">信息泄露</span>
+                                    <span class="game-card-desc">找出信息泄露风险点</span>
+                                </button>
+                                <button type="button" id="btn-open-evidence" class="game-card" style="--card-glow: rgba(90,200,250,0.3);">
+                                    <span class="game-card-icon">🧩</span>
+                                    <span class="game-card-title">反诈拼图</span>
+                                    <span class="game-card-desc">拼接完整证据链</span>
+                                </button>
+                                <button type="button" id="btn-open-alert" class="game-card" style="--card-glow: rgba(255,204,0,0.3);">
+                                    <span class="game-card-icon">⚠️</span>
+                                    <span class="game-card-title">预警系统</span>
+                                    <span class="game-card-desc">设置诈骗预警规则</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel 4: 公益宇宙 · 新赛道 -->
+                        <div id="hub-panel-universe" class="hub-panel" data-panel="universe" role="tabpanel" aria-labelledby="hub-tab-universe" aria-hidden="true">
+                            <p class="hub-hint">&#x1F30D; 公益宇宙 &middot; 新赛道 — 用互动游戏连接更多善意</p>
+                            <div class="game-grid">
+                                <button type="button" id="btn-open-ocean" class="game-card" style="--card-glow: rgba(0,255,136,0.3);">
+                                    <span class="game-card-icon">&#x1F30A;</span>
+                                    <span class="game-card-title">深蓝修复者</span>
+                                    <span class="game-card-desc">珊瑚礁生态修复</span>
+                                </button>
+                                <button type="button" id="btn-open-oracle" class="game-card" style="--card-glow: rgba(196,58,49,0.3);">
+                                    <span class="game-card-icon">&#x1F309;</span>
+                                    <span class="game-card-title">甲骨重光</span>
+                                    <span class="game-card-desc">商代甲骨修复拼图</span>
+                                </button>
+                                <button type="button" id="btn-open-truth" class="game-card" style="--card-glow: rgba(255,107,53,0.3);">
+                                    <span class="game-card-icon">&#x1F578;</span>
+                                    <span class="game-card-title">真相拼图</span>
+                                    <span class="game-card-desc">反诈证据链推理</span>
+                                </button>
+                                <button type="button" id="btn-open-heart" class="game-card" style="--card-glow: rgba(192,132,252,0.3);">
+                                    <span class="game-card-icon">&#x1F496;</span>
+                                    <span class="game-card-title">心桥计划</span>
+                                    <span class="game-card-desc">情绪认知色轮</span>
+                                </button>
+                                <button type="button" id="btn-open-grain" class="game-card" style="--card-glow: rgba(247,220,111,0.3);">
+                                    <span class="game-card-icon">&#x1F33E;</span>
+                                    <span class="game-card-title">禾下乘凉</span>
+                                    <span class="game-card-desc">粮食安全旅程</span>
+                                </button>
+                                <button type="button" id="btn-open-forest" class="game-card" style="--card-glow: rgba(34,139,34,0.3);">
+                                    <span class="game-card-icon">🌲</span>
+                                    <span class="game-card-title">森林守护者</span>
+                                    <span class="game-card-desc">森林病虫害防治</span>
+                                </button>
+                                <button type="button" id="btn-open-light" class="game-card" style="--card-glow: rgba(255,215,0,0.3);">
+                                    <span class="game-card-icon">💡</span>
+                                    <span class="game-card-title">光明使者</span>
+                                    <span class="game-card-desc">偏远地区供电方案</span>
+                                </button>
+                                <button type="button" id="btn-open-seed" class="game-card" style="--card-glow: rgba(50,205,50,0.3);">
+                                    <span class="game-card-icon">🌱</span>
+                                    <span class="game-card-title">种子银行</span>
+                                    <span class="game-card-desc">濒危植物种子保存</span>
+                                </button>
+                                <button type="button" id="btn-open-civil" class="game-card" style="--card-glow: rgba(210,105,30,0.3);">
+                                    <span class="game-card-icon">📜</span>
+                                    <span class="game-card-title">文明使者</span>
+                                    <span class="game-card-desc">古代文献修复翻译</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 3: WORKSPACE (PUZZLE WORKBENCH) -->
+        <section id="screen-workspace" class="game-screen">
+            <div class="content-wrapper workspace-content">
+                <header class="workspace-header">
+                    <button type="button" id="btn-back-to-hub" class="btn-secondary">← 阁楼</button>
+                    <h2 id="workspace-title">重构：老式收音机</h2>
+                    <div class="workspace-tip">老人的思绪正被重重迷雾笼罩。让我们轻柔拂拭，拨开这层迷雾，显现曾经熟悉的轮廓。</div>
+                </header>
+
+                <!-- Restoration Tool Belt / Stage Panel -->
+                <div class="restoration-progress-panel glass-panel">
+                    <div class="restoration-stages">
+                        <!-- Dynamically generated per item: e.g. Radio (2 stages), Camera (2 stages), Sewing (2 stages), Lantern (2 stages) -->
+                    </div>
+                    <div class="restoration-status-bar">
+                        <span class="status-label" id="restoration-status-text" role="status" aria-live="polite">正在启动温馨记忆唤醒盒...</span>
+                        <div class="restoration-bar-bg">
+                            <div id="restoration-bar-fill" style="width: 0%;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="修复进度"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workbench Layout -->
+                <div class="workbench-layout">
+                    <!-- Left: Target Area (Blueprint Slot) -->
+                    <div class="blueprint-area glass-panel">
+                        <div class="blueprint-inner" id="blueprint-target-zone">
+                            <!-- Blueprint SVG goes here -->
+                            <div id="active-blueprint-svg"></div>
+                            <!-- Stitch points overlay layer -->
+                            <div id="stitch-points-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 25;"></div>
+                            <!-- Dust overlay visual filter -->
+                            <div id="blueprint-dust-overlay" class="dust-overlay"></div>
+                            <!-- Rust overlay visual filter -->
+                            <div id="blueprint-rust-overlay" class="rust-overlay"></div>
+                            <!-- Canvas sparkle overlay -->
+                            <canvas id="workspace-particle-canvas" role="presentation" aria-hidden="true"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right: Parts Selection Tray -->
+                    <div class="parts-tray-container glass-panel">
+                        <!-- Cabinet shown during restoration stages -->
+                        <div id="restoration-tool-cabinet" class="tool-cabinet-content">
+                            <h3 id="cabinet-title">温馨记忆唤醒盒</h3>
+                            <p class="tray-sub" id="cabinet-sub">请滑动，用温暖的手拨开尘封的雾霾</p>
+                            <div class="active-tool-display">
+                                <div class="large-tool-icon" id="cabinet-tool-icon">🌬️</div>
+                                <div class="tool-glow-effect"></div>
+                            </div>
+                            
+                            <!-- Custom Prelude Gameplay Zone (dynamic slider, matchbox, etc.) -->
+                            <div id="custom-prelude-gameplay-zone" style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50px;"></div>
+
+                            <div class="tool-instructions-box">
+                                <h4 style="margin:0 0 6px 0; color:var(--accent-rose); font-size:0.8rem; letter-spacing:1px; text-transform:uppercase;">Alzheimer's Empathy</h4>
+                                <p id="cabinet-instruction" style="margin:0; font-size:0.85rem; color:var(--text-muted); line-height:1.4;">像用手轻抚长辈那般在物件上反复轻扫，拂去遮挡思绪的认知迷雾。</p>
+                            </div>
+                        </div>
+
+                        <!-- Tray shown during final assembly stage -->
+                        <div id="assembly-tray-content" class="hidden">
+                            <h3>记忆线索托盘</h3>
+                            <p class="tray-sub">拖拽零落的珍贵线索，重新织补脑海的连结</p>
+                            <div class="parts-tray" id="parts-tray-zone">
+                                <!-- Draggable parts will be generated and positioned here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 4: NARRATIVE INTERACTIVE MODAL / OVERLAY -->
+        <div id="narrative-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="narrative-item-title" aria-hidden="true">
+            <div class="modal-card glass-panel large-modal">
+                <div class="modal-glow"></div>
+                <div class="modal-content">
+                    <div class="narrative-visual-header">
+                        <div id="narrative-item-showcase"></div>
+                        <div class="item-awakened-label">✨ 器物苏醒 ✨</div>
+                    </div>
+                    
+                    <div class="narrative-body">
+                        <h2 id="narrative-item-title">老式收音机 已修复</h2>
+                        
+                        <!-- Choice triggers narrative branches -->
+                        <div id="narrative-choice-zone" class="choice-container">
+                            <p class="choice-prompt">奶奶的记忆开始复苏...你想帮她拨动哪段记忆的旋钮？</p>
+                            <div class="choice-buttons-list">
+                                <!-- Choices dynamically inserted -->
+                            </div>
+                        </div>
+
+                        <!-- Typing Narrative text -->
+                        <div id="narrative-text-zone" class="narrative-text-box hidden">
+                            <div class="narrative-scroll-area">
+                                <p id="narrative-typing-text"></p>
+                            </div>
+                            <div class="narrative-author">— 编织自时光深处的独白</div>
+                        </div>
+
+                        <!-- Interactive Toys Container -->
+                        <div id="interactive-toy-wrapper" class="interactive-toy-wrapper hidden">
+                            <!-- Radio Toy -->
+                            <div id="toy-radio" class="toy-container hidden">
+                                <div class="frequency-indicator-panel">
+                                    <span class="frequency-label">当前频率: <span id="current-frequency-val">90.0</span> MHz</span>
+                                    <div class="tuning-ruler">
+                                        <div class="tuning-pointer" id="tuning-pointer-element" style="left: 0%;"></div>
+                                        <div class="tuning-scales">
+                                            <span>90</span><span class="highlight-scale">93.5</span><span>96</span><span class="highlight-scale">98.7</span><span class="highlight-scale">102.4</span><span>106</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="range" id="radio-tuning-slider" min="90.0" max="106.0" step="0.1" value="90.0" class="retro-slider" aria-label="收音机记忆频率调节">
+                                <p class="toy-instructions">🎛 左右滑动滑块进行调频，寻找黄金记忆频段 (93.5MHz / 98.7MHz / 102.4MHz)</p>
+                            </div>
+                            
+                            <!-- Camera Toy -->
+                            <div id="toy-camera" class="toy-container hidden">
+                                <button type="button" id="btn-camera-shutter" class="btn-shutter">📸 按下快门拍摄记忆照</button>
+                                <div id="photo-frame-polaroid" class="polaroid-photo-frame hidden">
+                                    <div class="photo-inner-svg" id="photo-sketch-container"></div>
+                                    <div class="polaroid-caption" id="polaroid-caption-text">记忆·春游 1985</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sewing Machine Toy -->
+                            <div id="toy-sewing" class="toy-container hidden">
+                                <div class="sewing-machine-status">
+                                    <span class="sewing-counter">针脚计数: <span id="sewing-stitch-count">0</span> / 100 针</span>
+                                    <div class="sewing-progress-bar-bg">
+                                        <div id="sewing-progress-bar-fill" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <button type="button" id="btn-sewing-pedal" class="btn-pedal" role="button" tabindex="0" aria-label="长按足踏板驱动缝纫机，针脚满100后织成红棉袄">👣 长按足踏板运转缝纫机</button>
+                                <p class="toy-instructions">长按踏板走线，针脚满 100 后即可织成温暖的红棉袄</p>
+                            </div>
+
+                            <!-- Kerosene Lantern Toy -->
+                            <div id="toy-lantern" class="toy-container hidden">
+                                <div class="sewing-machine-status" style="margin-bottom: 15px;">
+                                    <span class="sewing-counter" style="color: var(--accent-gold);">马灯灯芯亮度: <span id="lantern-intensity-val">30</span>%</span>
+                                    <div class="lantern-visual-indicator" style="background: rgba(229, 169, 59, 0.3); box-shadow: 0 0 30px rgba(229, 169, 59, 0.3); border-radius: 50%; width: 45px; height: 45px; margin: 10px auto; transition: background 0.3s, box-shadow 0.3s;"></div>
+                                </div>
+                                <input type="range" id="lantern-intensity-slider" min="10" max="100" step="1" value="30" class="retro-slider" aria-label="马灯灯芯亮度调节">
+                                <p class="toy-instructions">🕯 左右拖动阀门滑块，将亮度调至 80% 以上即可唤醒记忆</p>
+                            </div>
+
+                            <!-- Pocket Watch Toy -->
+                            <div id="toy-watch" class="toy-container hidden">
+                                <div class="sewing-machine-status" style="margin-bottom: 15px;">
+                                    <span class="sewing-counter" style="color: var(--accent-gold);">发条张力值: <span id="watch-spring-val">0</span>%</span>
+                                    <div class="watch-visual-indicator" id="watch-gear-indicator" style="background: rgba(229, 169, 59, 0.1); border: 2px dashed var(--accent-gold); border-radius: 50%; width: 50px; height: 50px; margin: 10px auto; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.1s linear;">⚙️</div>
+                                </div>
+                                <button type="button" id="btn-wind-crown" class="btn-pedal" role="button" tabindex="0" aria-label="点击或长按旋转发条旋钮，张力达100%驱动时光齿轮">⚙️ 多次点击或长按旋转发条</button>
+                                <p class="toy-instructions">多次点击或长按上发条按钮，直至张力达到 100% 即可驱动时光机齿轮运转</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="btn-close-narrative" class="btn-secondary" type="button">返回阁楼</button>
+                        <button type="button" id="btn-save-narrative" class="btn-primary ripple hidden">
+                            <span class="btn-icon">💾</span> 刻录至记忆相册
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: ALBUM & PUBLIC WELFARE ADVOCACY -->
+        <section id="screen-album" class="game-screen">
+            <div class="content-wrapper album-content">
+                <header class="album-header">
+                    <button type="button" id="btn-album-back-to-hub" class="btn-secondary">← 返回阁楼</button>
+                    <h2>时光记忆相册</h2>
+                </header>
+
+                <!-- Album Layout -->
+                <div class="album-book glass-panel">
+                    <!-- Dynamic pages -->
+                    <div class="album-pages-container" id="album-pages-container">
+                        <!-- Loaded dynamically in JS. If empty, show instructions -->
+                        <div class="album-placeholder-page">
+                            <div class="placeholder-icon">📖</div>
+                            <h3>你的相册空空如也</h3>
+                            <p>回到阁楼去重构老物件，倾听奶奶的陈年旧事，这些闪光的时光切片将永久珍藏于此。</p>
+                            <button type="button" id="btn-album-go-hub" class="btn-primary">去重构物件</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capsule Message and Poster Export Panel -->
+                <div class="advocacy-panel glass-panel" style="margin-bottom: 20px; width: 100%;">
+                    <div class="advocacy-content" style="width: 100%;">
+                        <span class="advocacy-badge" style="background: var(--accent-rose);">💌 时空寄语胶囊</span>
+                        <h3>写给家中长辈的一句话</h3>
+                        <p>重构的记忆是连接岁月的线，在这里留下您最想对家中长辈说的话，我们将连同重构苏醒的回忆器物与AI生成独白，为您精心绘制一张富有强烈情感张力的【时光守护海报】。</p>
+                        <div style="display: flex; gap: 12px; margin-top: 15px; width: 100%; align-items: center; justify-content: center;">
+                            <input type="text" id="album-custom-message" aria-label="写给家中长辈的一句话" maxlength="120" placeholder="亲爱的长辈，祝您岁岁平安，记忆常青..." style="flex: 1; padding: 12px 15px; border-radius: 10px; border: 1px solid rgba(229,169,59,0.3); background: rgba(0,0,0,0.25); color: var(--text-primary); font-family: inherit; font-size: 0.95rem; outline: none; transition: border 0.3s;">
+                            <button type="button" id="btn-generate-capsule-poster" class="btn-primary ripple" style="min-width: 170px; padding: 12px 20px; font-weight: bold; border-radius: 10px;">🎨 生成时光海报</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advocacy and Donation Panel -->
+                <div class="advocacy-panel glass-panel">
+                    <div class="advocacy-content">
+                        <span class="advocacy-badge">腾讯公益 · 小红花游戏</span>
+                        <h3>让爱不再随风消散</h3>
+                        <p>
+                            在中国，有超过1000万的老年人正承受着阿尔茨海默病（老年痴呆症）的困扰。
+                            认知训练、生活干预、耐心的陪伴以及旧物回忆疗法，能有效延缓认知衰退。
+                            伸出双手，我们可以做得更多。关注适老化关怀，让我们用爱和理解，包容他们的“遗忘”。
+                        </p>
+                        <div class="advocacy-actions">
+                            <a href="https://gongyi.qq.com/" target="_blank" rel="noopener noreferrer" class="btn-primary ripple link-btn">
+                                <span class="btn-icon">❤️</span> 参与腾讯小红花公益
+                            </a>
+                            <button type="button" id="btn-close-album-view" class="btn-secondary">继续陪伴</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 6: PUBLIC WELFARE TRACKS GUIDE MODAL -->
+        <div id="guide-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="guide-modal-title" aria-hidden="true">
+            <div class="modal-card glass-panel medium-modal">
+                <div class="modal-header">
+                    <h3 id="guide-modal-title">💡 六大公益赛道介绍</h3>
+                    <button id="btn-close-guide" class="btn-close" type="button" aria-label="关闭公益赛道介绍">&times;</button>
+                </div>
+                <div class="modal-scroll-body">
+                    <div class="guide-section">
+                        <h4>🏠 时光的回响 — 阿尔茨海默病适老化关怀</h4>
+                        <p>通过修复奶奶的老物件，体验回忆疗法的力量。在拼图、翻牌、寻物等互动中，理解认知衰退患者的内心世界，学习如何以耐心与爱意陪伴他们。</p>
+                    </div>
+                    <div class="guide-section">
+                        <h4>🌊 深蓝修复者 — 海洋生态保护</h4>
+                        <p>潜入海底，清理塑料垃圾、修复珊瑚礁、拯救受困海洋生物。在互动中了解海洋污染的严峻现状，培养环保意识与垃圾分类习惯。</p>
+                    </div>
+                    <div class="guide-section">
+                        <h4>🀄 甲骨重光 — 非遗文化传承</h4>
+                        <p>拼接散落的甲骨碎片，破译古老的文字密码。在修复文物的过程中，感受中华文明的博大精深，激发对非物质文化遗产的保护热情。</p>
+                    </div>
+                    <div class="guide-section">
+                        <h4>🕸️ 真相拼图 — 防诈骗安全教育</h4>
+                        <p>识别精心设计的诈骗话术，拆解网络陷阱的层层套路。通过案例学习提升防骗意识，守护自己与家人的财产安全。</p>
+                    </div>
+                    <div class="guide-section">
+                        <h4>🧩 心桥计划 — 心理健康关怀</h4>
+                        <p>搭建心灵的桥梁，倾听内心的声音。通过互动体验了解心理健康知识，学习情绪管理与压力释放，传递温暖与理解。</p>
+                    </div>
+                    <div class="guide-section">
+                        <h4>🌾 禾下乘凉 — 粮食安全与节约</h4>
+                        <p>从一粒种子到餐桌美食，体验粮食的来之不易。在耕种与收获中培养节约意识，致敬袁隆平院士的"禾下乘凉梦"。</p>
+                    </div>
+                    <div class="guide-section text-center">
+                        <span class="highlight-quote">"一个善意的起点，六个改变世界的公益世界。"</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-guide-got-it" class="btn-primary ripple">我明白了，进入公益宇宙</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 7: MEMORY WORKSHOP / SHOP OVERLAY -->
+        <div id="shop-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="shop-modal-title" aria-hidden="true">
+            <div class="modal-card glass-panel medium-modal">
+                <div class="modal-header">
+                    <h3 id="shop-modal-title">🏪 记忆工坊 - 回忆升级商店</h3>
+                    <button id="btn-close-shop" class="btn-close" type="button" aria-label="关闭回忆升级商店">&times;</button>
+                </div>
+                <div class="modal-scroll-body">
+                    <div class="shop-balance" style="display: flex; align-items: center; justify-content: center; background: rgba(229,169,59,0.08); border: 1px solid rgba(229,169,59,0.25); border-radius: 12px; padding: 12px; margin-bottom: 20px;">
+                        <span style="font-size: 1.15rem; font-weight: bold; color: var(--text-primary);">当前记忆银币: <span id="shop-silver-balance" class="highlight-value" style="color: var(--accent-gold); font-size: 1.4rem; margin-left: 8px;">0</span> 🪙</span>
+                    </div>
+                    <div class="shop-items-list" style="display: flex; flex-direction: column; gap: 15px;">
+                        <!-- Item 1: Cleaner upgrade -->
+                        <div class="shop-item-card glass-panel" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid rgba(229,169,59,0.2); border-radius: 12px; background: rgba(0,0,0,0.15);">
+                            <div style="text-align: left; flex: 1;">
+                                <h4 style="margin: 0; color: var(--accent-gold); font-size: 1.05rem;">🌬️ 红杉木除尘毛刷 (迷雾清扫)</h4>
+                                <p style="margin: 6px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.3;">提升迷雾清扫速度，降低过度划拂的阻力，增加轻抚容错率。</p>
+                                <span style="font-size: 0.8rem; color: var(--accent-rose); font-weight: bold;">当前等级: LV.<span id="upgrade-cleaner-lvl">1</span></span>
+                            </div>
+                            <button type="button" id="btn-buy-upgrade-cleaner" class="btn-primary ripple" style="padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; margin-left: 15px; min-width: 110px;">升级: <span id="upgrade-cleaner-cost">100</span> 🪙</button>
+                        </div>
+                        
+                        <!-- Item 2: Tuner upgrade -->
+                        <div class="shop-item-card glass-panel" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid rgba(229,169,59,0.2); border-radius: 12px; background: rgba(0,0,0,0.15);">
+                            <div style="text-align: left; flex: 1;">
+                                <h4 style="margin: 0; color: var(--accent-gold); font-size: 1.05rem;">🎛️ 黄铜精密表盘 (微差调频)</h4>
+                                <p style="margin: 6px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.3;">拓宽收音机调频的谐振锁定判定窗口，更容易进入稳定清晰的心流。</p>
+                                <span style="font-size: 0.8rem; color: var(--accent-rose); font-weight: bold;">当前等级: LV.<span id="upgrade-tuner-lvl">1</span></span>
+                            </div>
+                            <button type="button" id="btn-buy-upgrade-tuner" class="btn-primary ripple" style="padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; margin-left: 15px; min-width: 110px;">升级: <span id="upgrade-tuner-cost">100</span> 🪙</button>
+                        </div>
+                        
+                        <!-- Item 3: Stitch upgrade -->
+                        <div class="shop-item-card glass-panel" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid rgba(229,169,59,0.2); border-radius: 12px; background: rgba(0,0,0,0.15);">
+                            <div style="text-align: left; flex: 1;">
+                                <h4 style="margin: 0; color: var(--accent-gold); font-size: 1.05rem;">🧵 记忆高灵敏踏板 (缝纫连击)</h4>
+                                <p style="margin: 6px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.3;">延长缝合节奏连击的有效判定区间，更轻松踩出脑突触高能连击！</p>
+                                <span style="font-size: 0.8rem; color: var(--accent-rose); font-weight: bold;">当前等级: LV.<span id="upgrade-stitch-lvl">1</span></span>
+                            </div>
+                            <button type="button" id="btn-buy-upgrade-stitch" class="btn-primary ripple" style="padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; margin-left: 15px; min-width: 110px;">升级: <span id="upgrade-stitch-cost">100</span> 🪙</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-shop-got-it" class="btn-primary ripple">关闭商店</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 8: MEMORY CAPSULE POSTER EXPORT OVERLAY -->
+        <div id="poster-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="poster-modal-title" aria-hidden="true">
+            <div class="modal-card glass-panel" style="max-width: 580px; text-align: center;">
+                <div class="modal-header">
+                    <h3 id="poster-modal-title">🎨 时光守护寄语海报</h3>
+                    <button id="btn-close-poster" class="btn-close" type="button" aria-label="关闭海报预览">&times;</button>
+                </div>
+                <div class="modal-scroll-body" style="padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">您可以长按海报图片或点击下方按钮将其保存到本地，传递温情与善意。</p>
+                    <div id="poster-canvas-container" style="max-width: 100%; border: 1.5px solid rgba(229,169,59,0.35); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center;">
+                        <span style="color: var(--accent-gold); font-size: 0.95rem; padding: 40px; display: block;" id="poster-loading-text">🔄 正在精心绘制高清时空海报...</span>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+                    <button type="button" id="btn-close-poster-view" class="btn-secondary" style="flex: 1;">关闭预览</button>
+                    <a id="btn-download-poster" href="#" download="时光守护海报.png" class="btn-primary ripple" style="flex: 1; text-decoration: none; text-align: center; display: inline-block; font-weight: bold;">💾 保存至本地</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 9: 记忆翻牌 — Memory Match (Redesigned) -->
+        <!-- ============================================================ -->
+        <section id="screen-match" class="game-screen">
+            <div class="content-wrapper match-content">
+                <header class="match-header">
+                    <button type="button" id="btn-match-back" class="btn-secondary">← 阁楼</button>
+                    <h2 style="font-size: clamp(1.5rem, 4vw, 2.2rem);">🧠 记忆翻牌</h2>
+                    <div class="match-stats">
+                        <span>步数: <strong id="match-moves">0</strong></span>
+                        <span>配对: <strong id="match-pairs">0</strong>/8</span>
+                    </div>
+                </header>
+                <p class="workspace-tip" style="font-size: clamp(1rem, 2.5vw, 1.25rem); margin-bottom: 28px;">翻开卡片，找到相同的记忆碎片——锻炼奶奶的瞬时记忆力</p>
+                <div class="match-grid" id="match-grid" aria-label="记忆翻牌游戏区域"></div>
+                <div id="match-result" class="match-result hidden">
+                    <h3>🎉 全部找回！</h3>
+                    <p id="match-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-match-replay" class="btn-primary ripple" style="font-size: 1.15rem; padding: 14px 32px;">🔄 再玩一次</button>
+                    <button type="button" id="btn-match-hub" class="btn-secondary" style="font-size: 1.15rem; padding: 14px 32px;">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 10: 时光排序 — Timeline Sort -->
+        <!-- ============================================================ -->
+        <section id="screen-timeline" class="game-screen">
+            <div class="content-wrapper timeline-content">
+                <header class="timeline-header">
+                    <button type="button" id="btn-timeline-back" class="btn-secondary">← 阁楼</button>
+                    <h2>📜 时光排序</h2>
+                </header>
+                <p class="workspace-tip">帮奶奶把散落的记忆碎片按时间顺序排好，重建她的人生故事线</p>
+                <div class="timeline-track" id="timeline-track" aria-label="时间线">
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="timeline-cards" id="timeline-cards" aria-label="待排序的记忆卡片"></div>
+                <div class="timeline-actions">
+                    <button type="button" id="btn-timeline-check" class="btn-primary ripple">✅ 确认排序</button>
+                </div>
+                <div id="timeline-result" class="timeline-result hidden">
+                    <h3 id="timeline-result-title"></h3>
+                    <p id="timeline-result-text"></p>
+                    <button type="button" id="btn-timeline-replay" class="btn-primary ripple">🔄 再排一次</button>
+                    <button type="button" id="btn-timeline-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 11: 寻回失物 — Hidden Object -->
+        <!-- ============================================================ -->
+        <section id="screen-hidden" class="game-screen">
+            <div class="content-wrapper hidden-content">
+                <header class="hidden-header">
+                    <button type="button" id="btn-hidden-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🔍 寻回失物</h2>
+                    <div class="hidden-progress">
+                        <span>已找到: <strong id="hidden-found">0</strong>/5</span>
+                    </div>
+                </header>
+                <p class="workspace-tip">奶奶的记忆阁楼里藏着许多珍贵小物——帮她把它们找出来吧</p>
+                <div class="hidden-scene" id="hidden-scene" aria-label="记忆阁楼场景">
+                    <svg viewBox="0 0 600 400" width="100%" height="100%" id="hidden-scene-svg"></svg>
+                </div>
+                <div class="hidden-checklist" id="hidden-checklist" aria-label="待寻找物品清单"></div>
+                <div id="hidden-result" class="hidden-result hidden">
+                    <h3>🎯 全部找到！</h3>
+                    <p id="hidden-score-text"></p>
+                    <button type="button" id="btn-hidden-replay" class="btn-primary ripple">🔄 再找一次</button>
+                    <button type="button" id="btn-hidden-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 9B: 🔢 数字迷宫 -->
+        <!-- ============================================================ -->
+        <section id="screen-maze" class="game-screen">
+            <div class="content-wrapper maze-content">
+                <header class="maze-header">
+                    <button type="button" id="btn-maze-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🔢 数字迷宫</h2>
+                    <div class="maze-stats">
+                        <span>得分: <strong id="maze-score">0</strong></span>
+                        <span>关卡: <strong id="maze-level">1</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">按顺序点击数字 1→2→3→...，训练工作记忆与注意力</p>
+                <div class="maze-grid" id="maze-grid"></div>
+                <div id="maze-result" class="maze-result hidden">
+                    <h3>🎉 完成！</h3>
+                    <p id="maze-score-text"></p>
+                    <button type="button" id="btn-maze-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-maze-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        
+        <!-- ============================================================ -->
+        <!-- SCREEN COLOR: 🎨 色彩归类 -->
+        <!-- ============================================================ -->
+        <section id="screen-color" class="game-screen">
+            <div class="content-wrapper color-content">
+                <header class="color-header">
+                    <button type="button" id="btn-color-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🎨 色彩归类</h2>
+                    <div class="color-stats">
+                        <span>得分: <strong id="color-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">将颜色卡片拖放到正确的颜色组中——训练执行功能与色彩辨识</p>
+                <div class="color-area" id="color-game-area"></div>
+                <div id="color-result" class="color-result hidden">
+                    <h3>🎉 完成！</h3>
+                    <p id="color-score-text"></p>
+                    <button type="button" id="btn-color-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-color-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 12: 🎨 色彩归类 -->
+        <!-- ============================================================ -->
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 13: 👤 面孔识别 -->
+        <!-- ============================================================ -->
+        <section id="screen-face" class="game-screen">
+            <div class="content-wrapper face-content">
+                <header class="face-header">
+                    <button type="button" id="btn-face-back" class="btn-secondary">← 阁楼</button>
+                    <h2>👤 面孔识别</h2>
+                    <div class="face-stats">
+                        <span>得分: <strong id="face-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">从相似面孔中找出目标人物——训练面孔记忆能力</p>
+                <div class="face-area" id="face-game-area"></div>
+                <div id="face-result" class="face-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="face-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-face-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-face-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 14: 💭 词语联想 -->
+        <!-- ============================================================ -->
+        <section id="screen-word" class="game-screen">
+            <div class="content-wrapper word-content">
+                <header class="word-header">
+                    <button type="button" id="btn-word-back" class="btn-secondary">← 阁楼</button>
+                    <h2>💭 词语联想</h2>
+                    <div class="word-stats">
+                        <span>得分: <strong id="word-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">根据提示词找出最相关的关联词——训练语义记忆</p>
+                <div class="word-area" id="word-game-area"></div>
+                <div id="word-result" class="word-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="word-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-word-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-word-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 15: 🎵 节奏复刻 -->
+        <!-- ============================================================ -->
+        <section id="screen-rhythm" class="game-screen">
+            <div class="content-wrapper rhythm-content">
+                <header class="rhythm-header">
+                    <button type="button" id="btn-rhythm-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🎵 节奏复刻</h2>
+                    <div class="rhythm-stats">
+                        <span>得分: <strong id="rhythm-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">记住并复刻给出的节奏序列——训练听觉工作记忆</p>
+                <div class="rhythm-area" id="rhythm-game-area"></div>
+                <div id="rhythm-result" class="rhythm-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="rhythm-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-rhythm-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-rhythm-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 16: 🧭 空间定向 -->
+        <!-- ============================================================ -->
+        <section id="screen-spatial" class="game-screen">
+            <div class="content-wrapper spatial-content">
+                <header class="spatial-header">
+                    <button type="button" id="btn-spatial-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🧭 空间定向</h2>
+                    <div class="spatial-stats">
+                        <span>得分: <strong id="spatial-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">在虚拟房间中按指示找到目标位置——训练空间认知</p>
+                <div class="spatial-area" id="spatial-game-area"></div>
+                <div id="spatial-result" class="spatial-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="spatial-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-spatial-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-spatial-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 17: 💧 节水达人 -->
+        <!-- ============================================================ -->
+        <section id="screen-water" class="game-screen">
+            <div class="content-wrapper water-content">
+                <header class="water-header">
+                    <button type="button" id="btn-water-back" class="btn-secondary">← 阁楼</button>
+                    <h2>💧 节水达人</h2>
+                    <div class="water-stats">
+                        <span>得分: <strong id="water-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">计算家庭用水量并找出浪费点——培养节水意识</p>
+                <div class="water-area" id="water-game-area"></div>
+                <div id="water-result" class="water-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="water-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-water-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-water-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 18: 🌍 碳足迹追踪 -->
+        <!-- ============================================================ -->
+        <section id="screen-carbon" class="game-screen">
+            <div class="content-wrapper carbon-content">
+                <header class="carbon-header">
+                    <button type="button" id="btn-carbon-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🌍 碳足迹追踪</h2>
+                    <div class="carbon-stats">
+                        <span>得分: <strong id="carbon-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">计算日常行为的碳排放量——了解环保影响</p>
+                <div class="carbon-area" id="carbon-game-area"></div>
+                <div id="carbon-result" class="carbon-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="carbon-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-carbon-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-carbon-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 19: 🔧 旧物新生 -->
+        <!-- ============================================================ -->
+        <section id="screen-repair" class="game-screen">
+            <div class="content-wrapper repair-content">
+                <header class="repair-header">
+                    <button type="button" id="btn-repair-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🔧 旧物新生</h2>
+                    <div class="repair-stats">
+                        <span>得分: <strong id="repair-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">选择正确的工具和步骤修复旧物——倡导循环经济</p>
+                <div class="repair-area" id="repair-game-area"></div>
+                <div id="repair-result" class="repair-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="repair-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-repair-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-repair-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 20: 🏥 急救先锋 -->
+        <!-- ============================================================ -->
+        <section id="screen-aid" class="game-screen">
+            <div class="content-wrapper aid-content">
+                <header class="aid-header">
+                    <button type="button" id="btn-aid-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🏥 急救先锋</h2>
+                    <div class="aid-stats">
+                        <span>得分: <strong id="aid-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">按正确顺序完成急救步骤——掌握急救知识</p>
+                <div class="aid-area" id="aid-game-area"></div>
+                <div id="aid-result" class="aid-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="aid-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-aid-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-aid-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 21: 🍎 食品安全 -->
+        <!-- ============================================================ -->
+        <section id="screen-food" class="game-screen">
+            <div class="content-wrapper food-content">
+                <header class="food-header">
+                    <button type="button" id="btn-food-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🍎 食品安全</h2>
+                    <div class="food-stats">
+                        <span>得分: <strong id="food-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">识别过期和变质食品——保障饮食安全</p>
+                <div class="food-area" id="food-game-area"></div>
+                <div id="food-result" class="food-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="food-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-food-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-food-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 22: 🐾 动物救助 -->
+        <!-- ============================================================ -->
+        <section id="screen-animal" class="game-screen">
+            <div class="content-wrapper animal-content">
+                <header class="animal-header">
+                    <button type="button" id="btn-animal-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🐾 动物救助</h2>
+                    <div class="animal-stats">
+                        <span>得分: <strong id="animal-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">选择正确的野生动物救助方式——保护动物生命</p>
+                <div class="animal-area" id="animal-game-area"></div>
+                <div id="animal-result" class="animal-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="animal-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-animal-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-animal-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 23: 🎣 钓鱼识别 -->
+        <!-- ============================================================ -->
+        <section id="screen-phish" class="game-screen">
+            <div class="content-wrapper phish-content">
+                <header class="phish-header">
+                    <button type="button" id="btn-phish-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🎣 钓鱼识别</h2>
+                    <div class="phish-stats">
+                        <span>得分: <strong id="phish-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">找出钓鱼网站的危险特征——提升网络安全意识</p>
+                <div class="phish-area" id="phish-game-area"></div>
+                <div id="phish-result" class="phish-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="phish-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-phish-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-phish-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 24: 📋 话术拆解 -->
+        <!-- ============================================================ -->
+        <section id="screen-script" class="game-screen">
+            <div class="content-wrapper script-content">
+                <header class="script-header">
+                    <button type="button" id="btn-script-back" class="btn-secondary">← 阁楼</button>
+                    <h2>📋 话术拆解</h2>
+                    <div class="script-stats">
+                        <span>得分: <strong id="script-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">拆解诈骗话术中的逻辑漏洞——识破骗局</p>
+                <div class="script-area" id="script-game-area"></div>
+                <div id="script-result" class="script-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="script-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-script-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-script-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 25: 🆔 身份验证 -->
+        <!-- ============================================================ -->
+        <section id="screen-identity" class="game-screen">
+            <div class="content-wrapper identity-content">
+                <header class="identity-header">
+                    <button type="button" id="btn-identity-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🆔 身份验证</h2>
+                    <div class="identity-stats">
+                        <span>得分: <strong id="identity-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">验证对方身份的真实性——防止身份冒用</p>
+                <div class="identity-area" id="identity-game-area"></div>
+                <div id="identity-result" class="identity-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="identity-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-identity-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-identity-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 26: 💸 转账陷阱 -->
+        <!-- ============================================================ -->
+        <section id="screen-transfer" class="game-screen">
+            <div class="content-wrapper transfer-content">
+                <header class="transfer-header">
+                    <button type="button" id="btn-transfer-back" class="btn-secondary">← 阁楼</button>
+                    <h2>💸 转账陷阱</h2>
+                    <div class="transfer-stats">
+                        <span>得分: <strong id="transfer-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">识别转账诈骗的常见套路——保护财产安全</p>
+                <div class="transfer-area" id="transfer-game-area"></div>
+                <div id="transfer-result" class="transfer-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="transfer-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-transfer-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-transfer-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 27: 🔓 信息泄露 -->
+        <!-- ============================================================ -->
+        <section id="screen-leak" class="game-screen">
+            <div class="content-wrapper leak-content">
+                <header class="leak-header">
+                    <button type="button" id="btn-leak-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🔓 信息泄露</h2>
+                    <div class="leak-stats">
+                        <span>得分: <strong id="leak-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">找出个人信息泄露的风险点——保护隐私安全</p>
+                <div class="leak-area" id="leak-game-area"></div>
+                <div id="leak-result" class="leak-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="leak-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-leak-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-leak-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 28: 🧩 反诈拼图 -->
+        <!-- ============================================================ -->
+        <section id="screen-evidence" class="game-screen">
+            <div class="content-wrapper evidence-content">
+                <header class="evidence-header">
+                    <button type="button" id="btn-evidence-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🧩 反诈拼图</h2>
+                    <div class="evidence-stats">
+                        <span>得分: <strong id="evidence-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">将碎片证据拼接成完整证据链——还原真相</p>
+                <div class="evidence-area" id="evidence-game-area"></div>
+                <div id="evidence-result" class="evidence-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="evidence-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-evidence-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-evidence-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 29: ⚠️ 预警系统 -->
+        <!-- ============================================================ -->
+        <section id="screen-alert" class="game-screen">
+            <div class="content-wrapper alert-content">
+                <header class="alert-header">
+                    <button type="button" id="btn-alert-back" class="btn-secondary">← 阁楼</button>
+                    <h2>⚠️ 预警系统</h2>
+                    <div class="alert-stats">
+                        <span>得分: <strong id="alert-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">设置诈骗预警规则——建立防护机制</p>
+                <div class="alert-area" id="alert-game-area"></div>
+                <div id="alert-result" class="alert-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="alert-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-alert-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-alert-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 30: 🌲 森林守护者 -->
+        <!-- ============================================================ -->
+        <section id="screen-forest" class="game-screen">
+            <div class="content-wrapper forest-content">
+                <header class="forest-header">
+                    <button type="button" id="btn-forest-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🌲 森林守护者</h2>
+                    <div class="forest-stats">
+                        <span>得分: <strong id="forest-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">识别和防治森林病虫害——保护森林生态</p>
+                <div class="forest-area" id="forest-game-area"></div>
+                <div id="forest-result" class="forest-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="forest-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-forest-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-forest-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 31: 💡 光明使者 -->
+        <!-- ============================================================ -->
+        <section id="screen-light" class="game-screen">
+            <div class="content-wrapper light-content">
+                <header class="light-header">
+                    <button type="button" id="btn-light-back" class="btn-secondary">← 阁楼</button>
+                    <h2>💡 光明使者</h2>
+                    <div class="light-stats">
+                        <span>得分: <strong id="light-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">为偏远地区设计供电方案——促进能源公平</p>
+                <div class="light-area" id="light-game-area"></div>
+                <div id="light-result" class="light-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="light-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-light-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-light-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 32: 🌱 种子银行 -->
+        <!-- ============================================================ -->
+        <section id="screen-seed" class="game-screen">
+            <div class="content-wrapper seed-content">
+                <header class="seed-header">
+                    <button type="button" id="btn-seed-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🌱 种子银行</h2>
+                    <div class="seed-stats">
+                        <span>得分: <strong id="seed-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">分类和保存濒危植物种子——保护生物多样性</p>
+                <div class="seed-area" id="seed-game-area"></div>
+                <div id="seed-result" class="seed-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="seed-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-seed-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-seed-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 33: 📜 文明使者 -->
+        <!-- ============================================================ -->
+        <section id="screen-civil" class="game-screen">
+            <div class="content-wrapper civil-content">
+                <header class="civil-header">
+                    <button type="button" id="btn-civil-back" class="btn-secondary">← 阁楼</button>
+                    <h2>📜 文明使者</h2>
+                    <div class="civil-stats">
+                        <span>得分: <strong id="civil-score">0</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">修复和翻译古代文献——传承文化遗产</p>
+                <div class="civil-area" id="civil-game-area"></div>
+                <div id="civil-result" class="civil-result hidden">
+                    <h3>🎉 挑战完成！</h3>
+                    <p id="civil-score-text" style="font-size: 1.15rem; margin-bottom: 24px;"></p>
+                    <button type="button" id="btn-civil-replay" class="btn-primary ripple">🔄 再玩一次</button>
+                    <button type="button" id="btn-civil-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+<!-- ============================================================ -->
+        <!-- SCREEN 12: ♻️ 环保分类 -->
+        <!-- ============================================================ -->
+        <section id="screen-eco" class="game-screen">
+            <div class="content-wrapper eco-content">
+                <header class="eco-header"><button type="button" id="btn-eco-back" class="btn-secondary">← 阁楼</button><h2>♻️ 环保分类</h2>
+                    <div class="eco-stats-row">
+                        <span>得分: <strong id="eco-score">0</strong></span>
+                        <span style="color:#fbbf24;">连击 ×<strong id="eco-combo">1</strong></span>
+                        <span id="eco-timer-display">⏱ <strong id="eco-timer">90</strong>s</span>
+                        <span>剩余: <strong id="eco-remaining">0</strong></span>
+                    </div>
+                </header>
+                <div class="eco-difficulty-bar">
+                    <button type="button" class="eco-diff-btn active" data-diff="easy">🌱 简单 (8)</button>
+                    <button type="button" class="eco-diff-btn" data-diff="normal">🌿 普通 (16)</button>
+                    <button type="button" class="eco-diff-btn" data-diff="hard">🌳 困难 (20+限时)</button>
+                </div>
+                <p class="workspace-tip" id="eco-tip">将废弃物拖放到正确的垃圾桶——连续正确触发连击加分！</p>
+                <div class="eco-bins" id="eco-bins">
+                    <div class="eco-bin" data-bin="recycle"><span class="bin-icon">♻️</span>可回收<span class="bin-count" id="eco-count-recycle">0</span></div>
+                    <div class="eco-bin" data-bin="kitchen"><span class="bin-icon">🍂</span>厨余<span class="bin-count" id="eco-count-kitchen">0</span></div>
+                    <div class="eco-bin" data-bin="hazard"><span class="bin-icon">☣️</span>有害<span class="bin-count" id="eco-count-hazard">0</span></div>
+                    <div class="eco-bin" data-bin="other"><span class="bin-icon">🗑️</span>其他<span class="bin-count" id="eco-count-other">0</span></div>
+                </div>
+                <div class="eco-items" id="eco-items" aria-label="待分类垃圾"></div>
+                <div id="eco-result" class="match-result hidden"><h3 id="eco-result-title"></h3><p id="eco-result-text"></p><button type="button" id="btn-eco-replay" class="btn-primary ripple">🔄 再来一局</button><button type="button" id="btn-eco-hub" class="btn-secondary">返回阁楼</button></div>
+            </div>
+        </section>
+
+        <!-- SCREEN 13: 🚫 防骗卫士 -->
+        <section id="screen-fraud" class="game-screen">
+            <div class="content-wrapper fraud-content">
+                <header class="fraud-header"><button type="button" id="btn-fraud-back" class="btn-secondary">← 阁楼</button><h2>🚫 防骗卫士</h2>
+                    <div class="fraud-stats-row">
+                        <span>正确: <strong id="fraud-score">0</strong></span>
+                        <span style="color:#fbbf24;">连击 ×<strong id="fraud-combo">1</strong></span>
+                        <span id="fraud-timer-display">⏱ <strong id="fraud-timer">90</strong>s</span>
+                        <span>进度: <strong id="fraud-progress">0</strong>/8</span>
+                    </div>
+                </header>
+                <div class="fraud-difficulty-bar">
+                    <button type="button" class="fraud-diff-btn active" data-diff="easy">🌱 简单 (8)</button>
+                    <button type="button" class="fraud-diff-btn" data-diff="normal">🌿 普通 (12)</button>
+                    <button type="button" class="fraud-diff-btn" data-diff="hard">🌳 困难 (15+限时)</button>
+                    <span style="width:12px;"></span>
+                    <button type="button" class="fraud-diff-btn" id="fraud-flash-toggle" style="border-color:rgba(255,170,0,0.4);">⚡ 闪电模式</button>
+                </div>
+                <div id="fraud-flash-timer" style="display:none;width:100%;height:6px;background:rgba(255,255,0,0.15);border-radius:3px;margin-bottom:8px;">
+                    <div id="fraud-flash-fill" style="height:100%;width:100%;background:#ffaa00;border-radius:3px;transition:width 0.1s linear;"></div>
+                </div>
+                <p class="workspace-tip" id="fraud-tip">帮奶奶识别诈骗——连续正确触发连击加分！</p>
+                <div class="fraud-card glass-panel" id="fraud-card">
+                    <div class="fraud-badge" id="fraud-badge"></div>
+                    <h3 id="fraud-scenario"></h3>
+                    <p id="fraud-detail"></p>
+                </div>
+                <div class="fraud-actions">
+                    <button type="button" id="btn-fraud-scam" class="btn-primary" style="background:#dc2626; font-size:1.1rem; padding:14px 28px;">🚫 这是骗局！</button>
+                    <button type="button" id="btn-fraud-safe" class="btn-primary" style="background:#16a34a; font-size:1.1rem; padding:14px 28px;">✅ 这是真的</button>
+                </div>
+                <div id="fraud-feedback" class="fraud-feedback hidden"></div>
+                <div id="fraud-result" class="match-result hidden"><h3>🎯 防骗测验完成</h3><p id="fraud-result-text"></p><button type="button" id="btn-fraud-replay" class="btn-primary ripple">🔄 再测一次</button><button type="button" id="btn-fraud-hub" class="btn-secondary">返回阁楼</button></div>
+            </div>
+        </section>
+
+        <!-- SCREEN 14: 🌈 无障碍体验 -->
+        <section id="screen-a11y" class="game-screen">
+            <div class="content-wrapper a11y-content">
+                <header class="a11y-header"><button type="button" id="btn-a11y-back" class="btn-secondary">← 阁楼</button><h2>🌈 无障碍体验</h2>
+                    <div class="a11y-stats"><span>阶段: <strong id="a11y-stage">1</strong>/5</span><span>完成: <strong id="a11y-found">0</strong>/5</span></div>
+                </header>
+                <div class="a11y-progress"><div class="a11y-progress-fill" id="a11y-progress-fill" style="width:0%"></div></div>
+                <p class="a11y-impairment-label" id="a11y-impairment"></p>
+                <p class="workspace-tip a11y-tip" id="a11y-tip"></p>
+                <div class="a11y-scene" id="a11y-scene"><canvas id="a11y-canvas" width="500" height="320" role="button" tabindex="0" aria-label="视觉障碍模拟画布"></canvas></div>
+                <div class="a11y-target-info" id="a11y-target"></div>
+                <div id="a11y-result" class="match-result hidden"><h3>💡 共情达成</h3><p id="a11y-result-text"></p><button type="button" id="btn-a11y-replay" class="btn-primary ripple">🔄 再体验一次</button><button type="button" id="btn-a11y-hub" class="btn-secondary">返回阁楼</button></div>
+            </div>
+        </section>
+
+
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 15: 🔗 信号溯源 -->
+        <!-- ============================================================ -->
+        <section id="screen-trace" class="game-screen">
+            <div class="content-wrapper">
+                <header style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:8px;">
+                    <button type="button" id="btn-trace-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🔗 信号溯源</h2>
+                    <span style="color:var(--text-muted);font-size:0.9rem;">追溯: <strong id="trace-progress" style="color:#00ff88;">0</strong>/3</span>
+                </header>
+                <p class="workspace-tip" style="color:#00ff88;">用手指画出路线——从受骗者追溯到诈骗源头服务器</p>
+                <div id="trace-stage" style="text-align:center;margin:8px 0;font-size:0.85rem;color:#aaa;"></div>
+                <canvas id="trace-canvas" role="button" tabindex="0" aria-label="信号溯源画布，按回车或空格沿正确线索推进，也可以用触摸或鼠标连线。" style="display:block;width:100%;max-width:500px;height:400px;margin:0 auto;background:#0a0a12;border-radius:16px;border:2px solid rgba(0,255,136,0.2);touch-action:none;cursor:crosshair;"></canvas>
+                <div id="trace-result" class="match-result hidden"><h3 style="color:#00ff88;">🔗 全部溯源完成！</h3><p id="trace-result-text"></p><button type="button" id="btn-trace-replay" class="btn-primary ripple" style="background:#00ff88;color:#111;">🔄 再追一次</button><button type="button" id="btn-trace-hub" class="btn-secondary">返回阁楼</button></div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 16: 🧩 密码重组 -->
+        <!-- ============================================================ -->
+        <section id="screen-decode" class="game-screen">
+            <div class="content-wrapper">
+                <header style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                    <button type="button" id="btn-decode-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🧩 密码重组</h2>
+                    <span style="color:var(--text-muted);font-size:0.9rem;">解锁: <strong id="decode-score" style="color:#ff00ff;">0</strong>/5</span>
+                </header>
+                <p class="workspace-tip" style="color:#ff00ff;">把碎片按正确顺序拼出反诈安全密码——点击碎片即可入选</p>
+                <div id="decode-puzzle" style="text-align:center;margin:15px 0;">
+                    <div id="decode-hint" style="color:#aaa;font-size:0.85rem;margin-bottom:10px;"></div>
+                    <div id="decode-answer" style="min-height:50px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:15px;"></div>
+                    <div id="decode-tiles" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;"></div>
+                </div>
+                <div id="decode-result" class="match-result hidden"><h3 style="color:#ff00ff;">🧩 全部破解！</h3><p id="decode-result-text"></p><button type="button" id="btn-decode-replay" class="btn-primary ripple" style="background:#ff00ff;">🔄 再解一次</button><button type="button" id="btn-decode-hub" class="btn-secondary">返回阁楼</button></div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 18: 🌊 深蓝修复者 — 珊瑚礁生态修复 -->
+        <!-- ============================================================ -->
+        <section id="screen-ocean" class="game-screen">
+            <div class="content-wrapper ocean-content">
+                <header class="ocean-header">
+                    <button type="button" id="btn-ocean-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🌊 深蓝修复者</h2>
+                    <div class="ocean-stats">
+                        <span id="ocean-level-indicator">第 1/3 关</span>
+                        <span>⏱ <strong id="ocean-timer">120s</strong></span>
+                        <span>覆盖率: <strong id="ocean-progress-text">0%</strong></span>
+                        <span>已修复: <strong id="ocean-corals-placed">0</strong>/8</span>
+                        <span id="ocean-combo" class="combo-indicator"></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">全球珊瑚礁正以每年1-2%的速度白化消亡——在倒计时结束前移植珊瑚断枝，同时清除漂入的海洋垃圾</p>
+
+                <div id="ocean-pollution-msg" class="pollution-alert"></div>
+                <div id="ocean-fact" class="ocean-fact-popup"></div>
+
+                <!-- Progress Bar -->
+                <div class="ocean-progress-bar">
+                    <div class="ocean-progress-fill" id="ocean-progress-fill" style="width: 0%;"></div>
+                    <span class="ocean-progress-label" id="ocean-progress-label">第1关 · 礁盘覆盖率 0%</span>
+                </div>
+
+                <!-- Main Game Area -->
+                <div class="ocean-game-layout">
+                    <!-- Left: Reef Blueprint -->
+                    <div class="ocean-reef-area glass-panel" id="ocean-reef-area">
+                        <div class="ocean-reef-inner" id="ocean-reef-inner">
+                            <svg viewBox="0 0 400 350" width="100%" height="100%" id="ocean-reef-svg">
+                                <!-- Background: dead reef silhouette -->
+                                <defs>
+                                    <radialGradient id="reefGlow" cx="50%" cy="50%" r="50%">
+                                        <stop offset="0%" stop-color="#1a3a4a" />
+                                        <stop offset="100%" stop-color="#0a1628" />
+                                    </radialGradient>
+                                    <filter id="coralBloom">
+                                        <feGaussianBlur stdDeviation="3" result="blur" />
+                                        <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 0.42  0 0 0 0 0.29  0 0 0 0.7 0" />
+                                    </filter>
+                                </defs>
+                                <rect width="400" height="350" fill="url(#reefGlow)" rx="12"/>
+                                <!-- Dead reef base silhouette -->
+                                <path d="M0,280 Q50,250 100,260 Q150,240 200,255 Q250,230 300,250 Q350,240 400,260 L400,350 L0,350 Z" fill="#1a2a35" opacity="0.5"/>
+                                <path d="M0,300 Q80,270 160,290 Q240,260 320,285 Q360,270 400,290 L400,350 L0,350 Z" fill="#15232e" opacity="0.6"/>
+                                <!-- Coral target slots (8 positions) -->
+                                <g id="ocean-slots-layer"></g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Right: Coral Tray -->
+                    <div class="ocean-tray glass-panel" id="ocean-tray">
+                        <h3>🪸 珊瑚断枝培育箱</h3>
+                        <p class="tray-sub">拖拽珊瑚断枝到左侧礁盘的正确生态位</p>
+                        <div class="ocean-parts-tray" id="ocean-parts-tray">
+                            <!-- Draggable coral fragments -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div id="ocean-result" class="match-result hidden">
+                    <h3 style="color:#00ff88;">🌊 礁盘修复完成！</h3>
+                    <p id="ocean-result-text"></p>
+                    <button type="button" id="btn-ocean-replay" class="btn-primary ripple" style="background: linear-gradient(135deg, #00ff88, #00cc66); color:#111;">🔄 再修复一片海域</button>
+                    <button type="button" id="btn-ocean-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 19: 🀄 甲骨重光 — 甲骨文修复 -->
+        <!-- ============================================================ -->
+        <section id="screen-oracle" class="game-screen">
+            <div class="content-wrapper oracle-content">
+                <header class="oracle-header">
+                    <button type="button" id="btn-oracle-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🀄 甲骨重光</h2>
+                    <div class="oracle-stats">
+                        <span id="oracle-phase-indicator">阶段 1/3：拼合碎片</span>
+                        <span>拓片完整度: <strong id="oracle-progress">0%</strong></span>
+                        <span>已拼合: <strong id="oracle-placed">0</strong>/6</span>
+                    </div>
+                </header>
+                <p class="workspace-tip">中国已发现约15万片甲骨，完整可读的不到10%——拼合碎片→描红拓片→龟甲烘烤，让3000年前的商代文字重见天日</p>
+
+                <div class="oracle-progress-bar">
+                    <div class="oracle-progress-fill" id="oracle-progress-fill" style="width: 0%;"></div>
+                </div>
+
+                <!-- Phase 1: Assemble -->
+                <div id="oracle-assemble-area">
+                <div class="oracle-game-layout">
+                    <div class="oracle-shell-area glass-panel" id="oracle-shell-area">
+                        <div class="oracle-shell-inner" id="oracle-shell-inner">
+                            <svg viewBox="0 0 360 400" width="100%" height="100%" id="oracle-shell-svg">
+                                <defs>
+                                    <radialGradient id="shellGrad" cx="50%" cy="45%" r="55%">
+                                        <stop offset="0%" stop-color="#f5e6c8"/><stop offset="100%" stop-color="#d4c5a0"/>
+                                    </radialGradient>
+                                </defs>
+                                <ellipse cx="180" cy="200" rx="160" ry="180" fill="url(#shellGrad)" stroke="#8b6914" stroke-width="2" opacity="0.9"/>
+                                <path d="M60,100 Q120,150 100,250 Q80,350 120,380" stroke="#8b6914" stroke-width="1.5" fill="none" opacity="0.3"/>
+                                <path d="M300,90 Q240,140 260,240 Q280,340 240,380" stroke="#8b6914" stroke-width="1.5" fill="none" opacity="0.3"/>
+                                <path d="M120,30 Q160,80 180,100 Q200,80 240,30" stroke="#8b6914" stroke-width="1.5" fill="none" opacity="0.3"/>
+                                <g id="oracle-slots-layer"></g>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="oracle-tray glass-panel" id="oracle-tray">
+                        <h3>🐢 甲骨碎片匣</h3>
+                        <p class="tray-sub">拖拽龟甲碎片到拓片上的正确位置</p>
+                        <div class="oracle-parts-tray" id="oracle-parts-tray"></div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Phase 2: Trace -->
+                <div id="oracle-trace-area" class="hidden">
+                    <div class="oracle-trace-container glass-panel">
+                        <h3>✒️ 描红拓片 · <span id="oracle-trace-char-name">日</span></h3>
+                        <p id="oracle-trace-char-meaning" class="trace-meaning">太阳，代表光明与白昼</p>
+                        <canvas id="oracle-trace-canvas" width="360" height="300" class="trace-canvas"></canvas>
+                        <p>已描笔画: <strong id="oracle-trace-progress">0/4</strong> · 用鼠标沿虚线描摹甲骨文笔画</p>
+                    </div>
+                </div>
+
+                <!-- Phase 3: Bake -->
+                <div id="oracle-bake-area" class="hidden">
+                    <div class="oracle-bake-container glass-panel">
+                        <h3>🔥 龟甲烘烤</h3>
+                        <p>控制温度稳定在 <strong id="oracle-target-temp">320</strong>°C 附近 ±5°C，使墨迹渗透龟甲</p>
+                        <div class="oven-thermometer">
+                            <div class="oven-fill" id="oracle-oven-fill" style="height:0%;"></div>
+                            <span class="oven-temp" id="oracle-oven-temp">300</span>°C
+                        </div>
+                        <div class="oven-controls">
+                            <button type="button" id="oracle-fire-btn" class="btn-primary">🔥 升温 +15°C</button>
+                            <button type="button" id="oracle-cool-btn" class="btn-secondary">❄️ 降温 -15°C</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="oracle-result" class="match-result hidden">
+                    <h3 style="color:#c43a31;">🀄 甲骨重现！</h3>
+                    <p id="oracle-result-text"></p>
+                    <button type="button" id="btn-oracle-replay" class="btn-primary ripple" style="background: linear-gradient(135deg, #c43a31, #a0522d);">🔄 再修复一片</button>
+                    <button type="button" id="btn-oracle-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 20: 🕸️ 真相拼图 — 反诈证据链 -->
+        <!-- ============================================================ -->
+        <section id="screen-truth" class="game-screen">
+            <div class="content-wrapper truth-content">
+                <header class="truth-header">
+                    <button type="button" id="btn-truth-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🕸️ 真相拼图</h2>
+                    <div class="truth-stats">
+                        <span id="truth-round">第1/3案</span>
+                        <span>证据收集: <strong id="truth-placed">0</strong>/7</span>
+                        <span>得分: <strong id="truth-score">0分</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">电信诈骗每年造成数百亿损失——拼合证据链，识别虚假信息，揭开骗局真相</p>
+
+                <div class="truth-board glass-panel" id="truth-board">
+                    <div class="truth-board-title">📋 案件白板 — 冒充公检法诈骗</div>
+                    <div class="truth-whiteboard" id="truth-whiteboard">
+                        <!-- 7 evidence slots arranged as a timeline with connecting lines -->
+                        <svg viewBox="0 0 700 120" width="100%" height="100%" id="truth-svg">
+                            <defs>
+                                <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#ff6b35"/>
+                                </marker>
+                            </defs>
+                            <!-- Connection lines between slots (revealed on fill) -->
+                            <g id="truth-lines-layer">
+                                <line x1="75" y1="60" x2="155" y2="60" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRed)" opacity="0" class="truth-line" id="truth-line-0"/>
+                                <line x1="230" y1="60" x2="310" y2="60" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRed)" opacity="0" class="truth-line" id="truth-line-1"/>
+                                <line x1="385" y1="60" x2="465" y2="60" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRed)" opacity="0" class="truth-line" id="truth-line-2"/>
+                            </g>
+                            <!-- Slots layer -->
+                            <g id="truth-slots-layer"></g>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="truth-cards-tray" id="truth-cards-tray">
+                    <h4>🔍 散落证据卡</h4>
+                    <div class="truth-cards-area" id="truth-cards-area"></div>
+                </div>
+
+                <!-- Judge Area (appears after evidence complete) -->
+                <div id="truth-judge-area" class="truth-judge-panel hidden">
+                    <h3 id="truth-judge-title">真假判断 · 第1轮</h3>
+                    <p>证据链拼合完成！现在请识别哪些是虚假信息/诈骗话术：</p>
+                    <div class="truth-judge-header">
+                        <span>⏱ <strong id="truth-judge-timer">20s</strong></span>
+                        <span id="truth-judge-count">已识别: 0</span>
+                    </div>
+                    <div id="truth-judge-cards" class="truth-judge-cards"></div>
+                </div>
+
+                <div id="truth-result" class="match-result hidden">
+                    <h3 style="color:#ff6b35;">🔓 证据链完整！骗局已揭露</h3>
+                    <p id="truth-result-text"></p>
+                    <button type="button" id="btn-truth-replay" class="btn-primary ripple" style="background: linear-gradient(135deg, #ff6b35, #dc2626);">🔄 调查下一个案件</button>
+                    <button type="button" id="btn-truth-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 21: 🧩 心桥计划 — 情绪认知拼图 -->
+        <!-- ============================================================ -->
+        <section id="screen-heart" class="game-screen">
+            <div class="content-wrapper heart-content">
+                <header class="heart-header">
+                    <button type="button" id="btn-heart-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🧩 心桥计划</h2>
+                    <div class="heart-stats">
+                        <span id="heart-phase-indicator">阶段 1/3：认识情绪</span>
+                        <span>情绪认知: <strong id="heart-placed">0</strong>/8</span>
+                    </div>
+                </header>
+                <p class="workspace-tip">中国青少年抑郁检出率接近25%——认识情绪色轮→场景日记→情绪反思，学会与自己的内心对话</p>
+
+                <!-- Phase 1: Emotion Wheel -->
+                <div id="heart-wheel-container">
+                <!-- 情绪知识即时卡片 -->
+                <div id="heart-knowledge-card" class="heart-knowledge-card">
+                    <div class="hkc-emoji"></div>
+                    <div class="hkc-body">
+                        <h4 class="hkc-name"></h4>
+                        <p class="hkc-desc"></p>
+                        <div class="hkc-coping">
+                            <span class="hkc-badge">💡 应对方法</span>
+                            <p class="hkc-method"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="heart-game-layout">
+                    <div class="heart-wheel-area" id="heart-wheel-area">
+                        <svg viewBox="0 0 380 380" width="100%" height="100%" id="heart-wheel-svg">
+                            <defs>
+                                <radialGradient id="heartGlow" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#2a1f35"/><stop offset="100%" stop-color="#1a1225"/>
+                                </radialGradient>
+                            </defs>
+                            <circle cx="190" cy="190" r="180" fill="url(#heartGlow)" stroke="rgba(232,213,245,0.15)" stroke-width="2"/>
+                            <circle cx="190" cy="190" r="45" fill="rgba(232,213,245,0.08)" stroke="rgba(232,213,245,0.25)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                            <text x="190" y="193" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="11">核心事件</text>
+                            <g id="heart-slots-layer"></g>
+                        </svg>
+                    </div>
+                    <div class="heart-tray glass-panel" id="heart-tray">
+                        <h3>💜 情绪碎片盒</h3>
+                        <p class="tray-sub">把情绪卡片拖到色轮上对应的位置</p>
+                        <div class="heart-cards-tray" id="heart-cards-tray"></div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Phase 2: Emotion Diary -->
+                <div id="heart-diary-container" class="hidden">
+                    <div class="heart-diary-panel glass-panel">
+                        <h3>📖 情绪日记 · <span id="heart-diary-progress">1/6</span></h3>
+                        <p id="heart-diary-scenario" class="diary-scenario">今天考试得了满分，妈妈给你做了最爱吃的菜。</p>
+                        <div class="diary-intensity">
+                            <label for="heart-intensity-slider">感受强度：<strong id="heart-intensity-value">50%</strong></label>
+                            <input type="range" id="heart-intensity-slider" min="0" max="100" value="50" class="intensity-slider" aria-label="情绪感受强度调节">
+                        </div>
+                        <p>这是什么情绪？</p>
+                        <div id="heart-diary-options" class="diary-options"></div>
+                        <button type="button" id="heart-diary-submit" class="btn-primary" style="background:linear-gradient(135deg,#c084fc,#a855f7);margin-top:12px;">确认我的感受</button>
+                        <p id="heart-diary-feedback" class="heart-feedback"></p>
+                    </div>
+                </div>
+
+                <!-- Reflect Summary -->
+                <div id="heart-reflect-container" class="heart-reflect-panel hidden">
+                    <div class="glass-panel" style="text-align:center;padding:24px;">
+                        <h3 style="color:#c084fc;">💜 情绪反思</h3>
+                        <p style="font-size:1.2rem;margin:16px 0;">你识别了 <strong id="heart-reflect-correct" style="color:#22c55e;">0</strong>/<span id="heart-reflect-total">6</span> 个场景</p>
+                        <p>平均情绪强度：<strong id="heart-reflect-intensity" style="color:#fbbf24;">50%</strong></p>
+                        <p style="color:var(--text-muted);font-size:0.9rem;">每一种情绪都是内心的信使，接纳它们就是接纳自己</p>
+                    </div>
+                </div>
+                <div id="heart-result" class="match-result hidden">
+                    <h3 style="color:#c084fc;">💜 情绪光谱完整</h3>
+                    <p id="heart-result-text"></p>
+                    <button type="button" id="btn-heart-replay" class="btn-primary ripple" style="background: linear-gradient(135deg, #c084fc, #a855f7);">🔄 再探索一次</button>
+                    <button type="button" id="btn-heart-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 22: 🌾 禾下乘凉 — 粮食安全与食物旅程 -->
+        <!-- ============================================================ -->
+        <section id="screen-grain" class="game-screen">
+            <div class="content-wrapper grain-content">
+                <header class="grain-header">
+                    <button type="button" id="btn-grain-back" class="btn-secondary">← 阁楼</button>
+                    <h2>🌾 禾下乘凉</h2>
+                    <div class="grain-stats">
+                        <span>链条完整度: <strong id="grain-placed">0</strong>/8</span>
+                        <span>浪费: <strong id="grain-waste-score">0kg</strong></span>
+                        <span>拯救: <strong id="grain-saved-food">0份</strong></span>
+                    </div>
+                </header>
+                <p class="workspace-tip">全球每年浪费约13亿吨食物——追溯从种子到餐桌的旅程，拯救浪费的食物，致敬袁隆平院士的禾下乘凉梦</p>
+                <div id="grain-resource-cost" class="grain-cost-popup"></div>
+
+                <!-- Phase 1: Chain Assembly -->
+                <div id="grain-assemble-area">
+                <div class="grain-chain glass-panel" id="grain-chain">
+                    <div class="grain-chain-title">🌾 粮食旅程：从田野到餐桌</div>
+                    <svg viewBox="0 0 750 100" width="100%" height="100%" id="grain-chain-svg">
+                        <g id="grain-slots-layer"></g>
+                        <g id="grain-lines-layer"></g>
+                    </svg>
+                </div>
+                <div class="grain-cards-tray" id="grain-cards-tray">
+                    <h4>🌱 营养素/资源卡</h4>
+                    <div class="grain-cards-area" id="grain-cards-area"></div>
+                </div>
+                </div>
+
+                <!-- Phase 2: Waste Challenge -->
+                <div id="grain-waste-area" class="grain-waste-panel hidden">
+                    <h3>🍽️ 食物拯救行动</h3>
+                    <p id="grain-waste-tip">点击出现的食物浪费卡片来"拯救"它们！</p>
+                    <div id="grain-waste-cards" class="grain-waste-cards"></div>
+                </div>
+                <div id="grain-result" class="match-result hidden">
+                    <h3 style="color:#f7dc6f;">🌾 粮食旅程完整！</h3>
+                    <p id="grain-result-text"></p>
+                    <button type="button" id="btn-grain-replay" class="btn-primary ripple" style="background: linear-gradient(135deg, #f7dc6f, #d4a017); color:#111;">🔄 再走一次旅程</button>
+                    <button type="button" id="btn-grain-hub" class="btn-secondary">返回阁楼</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SCREEN: 数字迷宫 -->
+
+
+        <!-- SCREEN: 色彩归类 -->
+
+
+        <!-- SCREEN: 面孔识别 -->
+
+
+        <!-- SCREEN: 词语联想 -->
+
+
+        <!-- SCREEN: 节奏复刻 -->
+
+
+        <!-- SCREEN: 空间定向 -->
+
+
+        <!-- SCREEN: 节水达人 -->
+
+
+        <!-- SCREEN: 碳足迹追踪 -->
+
+
+        <!-- SCREEN: 旧物新生 -->
+
+
+        <!-- SCREEN: 急救先锋 -->
+
+
+        <!-- SCREEN: 食品安全 -->
+
+
+        <!-- SCREEN: 动物救助 -->
+
+
+        <!-- SCREEN: 钓鱼识别 -->
+
+
+        <!-- SCREEN: 话术拆解 -->
+
+
+        <!-- SCREEN: 身份验证 -->
+
+
+        <!-- SCREEN: 转账陷阱 -->
+
+
+        <!-- SCREEN: 信息泄露 -->
+
+
+        <!-- SCREEN: 反诈拼图 -->
+
+
+        <!-- SCREEN: 预警系统 -->
+
+
+        <!-- SCREEN: 森林守护者 -->
+
+
+        <!-- SCREEN: 光明使者 -->
+
+
+        <!-- SCREEN: 种子银行 -->
+
+
+        <!-- SCREEN: 文明使者 -->
+
+    </main>
+
+    <!-- JS Scripts -->
+    <script src="engine/state-persistence.js?v=20260609"></script>
+    <script src="sound.js?v=hackathon_v17_newgames"></script>
+    <script src="game.js?v=hackathon_v17_newgames"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "times-echo-weaver-99",
+  "version": "1.0.0",
+  "description": "时光的回响：记忆编织者 | 腾讯云黑客松公益赛道 Web 游戏项目",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "dev": "python -m http.server 8080",
+    "legacy": "http-server ./ -p 8080 -c-1",
+    "check": "node --check game.js && node --check sound.js && node --check tests/browser-smoke.cjs && node --check tests/static-contract.test.js",
+    "test": "node tests/static-contract.test.js",
+    "smoke": "node tests/browser-smoke.cjs",
+    "verify": "npm run check && npm test && npm run smoke"
+  },
+  "keywords": [
+    "hackathon",
+    "game",
+    "public-welfare",
+    "alzheimers",
+    "elderly-care",
+    "web-audio-api"
+  ],
+  "author": "Antigravity & Creative Partner",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "vercel": "^54.5.0"
+  }
+}
